@@ -26,6 +26,9 @@ const themes = {
 // Create a flattened list of all keywords for validation
 const allKeywords = Object.values(themes).flat();
 
+// In-memory cache for stories
+const storyCache = new Map();
+
 // Get all available keywords endpoint
 app.get('/keywords', (req, res) => {
     res.json({
@@ -63,6 +66,11 @@ const generateRandomKeywords = (numKeywords = 3) => {
     return selected;
 };
 
+// Utility function to generate cache key
+const generateCacheKey = (keywords) => {
+    return keywords.map(k => k.toLowerCase()).sort().join('|');
+};
+
 // Story generation endpoint
 app.post('/generate-story', async (req, res) => {
     try {
@@ -81,6 +89,17 @@ app.post('/generate-story', async (req, res) => {
         }
 
         const selectedKeywords = keywords || generateRandomKeywords();
+        const cacheKey = generateCacheKey(selectedKeywords);
+
+        // Check cache first
+        if (storyCache.has(cacheKey)) {
+            const cachedStory = storyCache.get(cacheKey);
+            return res.json({
+                story: cachedStory,
+                keywords_used: selectedKeywords,
+                cached: true
+            });
+        }
 
         const prompt = `
             Write a short story using the following keywords: ${selectedKeywords.join(', ')}.
@@ -99,9 +118,15 @@ app.post('/generate-story', async (req, res) => {
             temperature: 0.7
         });
 
+        const story = response.choices[0].message.content.trim();
+        
+        // Cache the story
+        storyCache.set(cacheKey, story);
+
         res.json({
-            story: response.choices[0].message.content.trim(),
-            keywords_used: selectedKeywords
+            story,
+            keywords_used: selectedKeywords,
+            cached: false
         });
     } catch (error) {
         console.error('Error generating story:', error);
@@ -111,7 +136,10 @@ app.post('/generate-story', async (req, res) => {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-    res.json({ status: 'ok' });
+    res.json({ 
+        status: 'ok',
+        cache_size: storyCache.size
+    });
 });
 
 app.listen(port, () => {
