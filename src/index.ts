@@ -36,7 +36,7 @@ interface ErrorResponse {
 }
 
 // Initialize Express app
-const app = express();
+export const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware
@@ -54,7 +54,7 @@ if (!process.env.OPENAI_API_KEY) {
   throw new Error('OPENAI_API_KEY is not defined in environment variables');
 }
 
-const openai = new OpenAI({
+export const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
@@ -71,6 +71,9 @@ const allKeywords: string[] = Object.values(themes).flat();
 
 // In-memory cache for stories
 const storyCache: Map<string, string> = new Map();
+
+// Attach cache to app.locals for testing
+app.locals.storyCache = storyCache;
 
 // Utility function to sanitize name
 const sanitizeName = (name: string): string => {
@@ -240,6 +243,9 @@ app.get('/health', (_req: Request, res: Response) => {
   });
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+// Only start the server if this file is run directly
+if (import.meta.main) {
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
+}
