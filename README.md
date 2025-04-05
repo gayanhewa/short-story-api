@@ -1,14 +1,16 @@
-# Story Generation API
+# Story Generator API
 
-A Node.js API built with Bun that generates short stories using OpenAI's GPT-3.5-turbo-instruct model. Stories are generated based on keywords and cached in memory for faster retrieval.
+A simple API for generating short stories using OpenAI's GPT-3.5 model. The API accepts keywords and generates engaging stories suitable for young readers.
 
 ## Features
 
-- Story generation using keywords
-- Keyword categories (games, characters, elements, settings)
-- In-memory caching for generated stories
-- Input validation
-- Cost-effective using GPT-3.5-turbo-instruct
+- Generate stories using predefined keywords
+- Random keyword generation if none provided
+- Story caching to avoid duplicate API calls
+- Input validation and sanitization
+- Customizable character name and age
+- Health check endpoint
+- Available keywords endpoint
 
 ## Prerequisites
 
@@ -47,51 +49,65 @@ bun run start
 
 ## API Endpoints
 
-### Generate Story
-```bash
-POST /generate-story
-```
-Request body:
+### POST /generate-story
+
+Generate a new story using provided keywords or random keywords.
+
+**Request Body:**
 ```json
 {
-    "keywords": ["Minecraft", "girl", "magic"]  // Optional
-}
-```
-Response:
-```json
-{
-    "story": "Generated story content...",
-    "keywords_used": ["Minecraft", "girl", "magic"],
-    "cached": false
+  "keywords": ["Minecraft", "magic"],  // Optional
+  "name": "Alex",                      // Optional
+  "age": 10                            // Optional
 }
 ```
 
-### Get Available Keywords
-```bash
-GET /keywords
-```
-Response:
+**Parameters:**
+- `keywords`: Array of keywords to use in the story (optional)
+  - If not provided, random keywords will be selected
+  - Must be from the available keywords list
+- `name`: Character's name (optional)
+  - Must contain at least one alphabetic character
+  - Non-alphabetic characters will be removed
+  - Only the first word will be used
+- `age`: Character's age (optional)
+  - Must be a positive integer between 1 and 16
+
+**Response:**
 ```json
 {
-    "categories": {
-        "games": ["Minecraft", "Roblox", "Fortnite", "Among Us"],
-        "characters": ["boy", "girl", "wizard", "warrior", "explorer"],
-        "elements": ["magic", "adventure", "mystery", "friendship"],
-        "settings": ["castle", "forest", "space", "underwater"]
-    },
-    "total_keywords": 16
+  "story": "Once upon a time...",
+  "keywords_used": ["Minecraft", "magic"],
+  "cached": false
 }
 ```
 
-### Health Check
-```bash
-GET /health
-```
-Response:
+### GET /keywords
+
+Get all available keywords organized by categories.
+
+**Response:**
 ```json
 {
-    "status": "ok",
-    "cache_size": 10
+  "categories": {
+    "games": ["Minecraft", "Roblox", "Fortnite", "Among Us"],
+    "characters": ["boy", "girl", "wizard", "warrior", "explorer"],
+    "elements": ["magic", "adventure", "mystery", "friendship"],
+    "settings": ["castle", "forest", "space", "underwater"]
+  },
+  "total_keywords": 17
+}
+```
+
+### GET /health
+
+Check the API health status.
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "cache_size": 5
 }
 ```
 
@@ -130,13 +146,31 @@ Using GPT-3.5-turbo-instruct model:
 - Average story cost: ~$0.00045 (300 tokens)
 - Caching helps reduce costs for repeated requests
 
-## Error Handling
+## Error Responses
 
-The API includes validation for:
-- Invalid keywords
-- Missing OpenAI API key
-- Server errors
-- Rate limiting
+The API returns appropriate error messages for invalid inputs:
+
+```json
+{
+  "error": "Invalid keywords provided",
+  "invalidKeywords": ["InvalidKeyword1", "InvalidKeyword2"],
+  "message": "Please use only keywords from the available list. Use GET /keywords to see all available options."
+}
+```
+
+```json
+{
+  "error": "Invalid name",
+  "message": "Name must contain at least one alphabetic character"
+}
+```
+
+```json
+{
+  "error": "Invalid age",
+  "message": "Age must be a positive integer between 1 and 16"
+}
+```
 
 ## Contributing
 

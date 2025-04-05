@@ -243,9 +243,8 @@ app.get('/health', (_req: Request, res: Response) => {
   });
 });
 
-// Only start the server if this file is run directly
-if (import.meta.main) {
-  app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-  });
-}
+
+app.listen(port, () => {
+console.log(`Server running on port ${port}`);
+});
+
