@@ -23,6 +23,9 @@ const themes = {
     settings: ['castle', 'forest', 'space', 'underwater']
 };
 
+// Create a flattened list of all keywords for validation
+const allKeywords = Object.values(themes).flat();
+
 // Get all available keywords endpoint
 app.get('/keywords', (req, res) => {
     res.json({
@@ -30,6 +33,20 @@ app.get('/keywords', (req, res) => {
         total_keywords: Object.values(themes).reduce((acc, curr) => acc + curr.length, 0)
     });
 });
+
+// Utility function to validate keywords
+const validateKeywords = (keywords) => {
+    const invalidKeywords = keywords.filter(keyword => 
+        !allKeywords.some(validKeyword => 
+            validKeyword.toLowerCase() === keyword.toLowerCase()
+        )
+    );
+    
+    return {
+        isValid: invalidKeywords.length === 0,
+        invalidKeywords
+    };
+};
 
 // Utility function to generate random keywords
 const generateRandomKeywords = (numKeywords = 3) => {
@@ -50,6 +67,19 @@ const generateRandomKeywords = (numKeywords = 3) => {
 app.post('/generate-story', async (req, res) => {
     try {
         const { keywords } = req.body;
+        
+        // If keywords are provided, validate them
+        if (keywords) {
+            const validation = validateKeywords(keywords);
+            if (!validation.isValid) {
+                return res.status(400).json({
+                    error: 'Invalid keywords provided',
+                    invalidKeywords: validation.invalidKeywords,
+                    message: 'Please use only keywords from the available list. Use GET /keywords to see all available options.'
+                });
+            }
+        }
+
         const selectedKeywords = keywords || generateRandomKeywords();
 
         const prompt = `
