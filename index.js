@@ -23,6 +23,14 @@ const themes = {
     settings: ['castle', 'forest', 'space', 'underwater']
 };
 
+// Get all available keywords endpoint
+app.get('/keywords', (req, res) => {
+    res.json({
+        categories: themes,
+        total_keywords: Object.values(themes).reduce((acc, curr) => acc + curr.length, 0)
+    });
+});
+
 // Utility function to generate random keywords
 const generateRandomKeywords = (numKeywords = 3) => {
     const categories = Object.keys(themes);
